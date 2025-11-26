@@ -7,6 +7,9 @@ export interface User {
   username: string
   email: string
   avatar?: string
+  empresaId?: number
+  empresaNombre?: string
+  rol?: string
 }
 
 // Tipos para el estado de autenticación

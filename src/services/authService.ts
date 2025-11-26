@@ -56,7 +56,7 @@ export const authService = {
   login: async (credentials: LoginRequest): Promise<AuthResponse> => {
     try {
       const response = await apiClient.post(
-        '/user/login/',
+        '/auth/user/login/',
         {
           email: credentials.email,
           password: credentials.password
@@ -74,7 +74,7 @@ export const authService = {
   register: async (userData: RegisterRequest): Promise<AuthResponse> => {
     try {
       const response = await apiClient.post(
-        '/user/register/',
+        '/auth/user/register/',
         {
           email: userData.email,
           password: userData.password,
@@ -93,7 +93,7 @@ export const authService = {
   googleAuth: async (data: GoogleAuthRequest): Promise<AuthResponse> => {
     try {
       const response = await apiClient.post(
-        '/user/google/',
+        '/auth/user/google/',
         data
       )
       return extractApiData(response)
@@ -108,7 +108,7 @@ export const authService = {
   requestOTP: async (data: OTPRequest): Promise<{ message: string }> => {
     try {
       const response = await apiClient.post(
-        '/user/otp/request/',
+        '/auth/user/otp/request/',
         data
       )
       return extractApiData(response)
@@ -123,7 +123,7 @@ export const authService = {
   validateOTP: async (data: OTPValidation): Promise<AuthResponse> => {
     try {
       const response = await apiClient.post(
-        '/user/otp/validate/',
+        '/auth/user/otp/validate/',
         data
       )
       return extractApiData(response)
@@ -138,7 +138,7 @@ export const authService = {
   requestPasswordReset: async (data: PasswordResetRequest): Promise<{ message: string }> => {
     try {
       const response = await apiClient.post(
-        '/user/password/request-reset/',
+        '/auth/user/password/request-reset/',
         data
       )
       return extractApiData(response)
@@ -153,7 +153,7 @@ export const authService = {
   confirmPasswordReset: async (data: PasswordResetConfirm): Promise<{ message: string }> => {
     try {
       const response = await apiClient.post(
-        '/user/password/confirm-reset/',
+        '/auth/user/password/confirm-reset/',
         data
       )
       return extractApiData(response)
