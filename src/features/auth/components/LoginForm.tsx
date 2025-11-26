@@ -51,6 +51,7 @@ export function LoginForm({ onSubmit, isLoading = false, error, onToggle }: Logi
 
       <button
         type="button"
+        onClick={handleGoogleSignIn}
         className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition-all duration-300 mb-6 border border-gray-700 hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
         disabled={isLoading}
       >
