@@ -3,8 +3,11 @@ import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card"
 import { Button } from "../../../components/ui/Button"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
+import { exportToExcel, exportToPDF, exportCierreToPDF } from "../../../lib/exportUtils"
+import { useState } from "react"
 
 export function Reports() {
+  const [exporting, setExporting] = useState<'excel' | 'pdf' | null>(null)
   const closuresData = [
     { date: "2024-11-26", aiBalance: 650, physicalBalance: 650, difference: 0, status: "Cerrado" },
     { date: "2024-11-25", aiBalance: 580, physicalBalance: 575, difference: -5, status: "Cerrado" },
@@ -40,6 +43,43 @@ export function Reports() {
     visible: {
       y: 0,
       opacity: 1
+    }
+  }
+
+  // Funciones de exportación
+  const handleExportExcel = async () => {
+    try {
+      setExporting('excel')
+      await exportToExcel(closuresData, 'historial-cierres')
+      alert('✅ Excel exportado exitosamente')
+    } catch (error) {
+      console.error('Error exportando Excel:', error)
+      alert('❌ Error al exportar Excel')
+    } finally {
+      setExporting(null)
+    }
+  }
+
+  const handleExportPDF = async () => {
+    try {
+      setExporting('pdf')
+      await exportToPDF(closuresData, 'historial-cierres')
+      alert('✅ PDF generado exitosamente')
+    } catch (error) {
+      console.error('Error generando PDF:', error)
+      alert('❌ Error al generar PDF')
+    } finally {
+      setExporting(null)
+    }
+  }
+
+  const handleExportCierrePDF = async (cierre: typeof closuresData[0]) => {
+    try {
+      await exportCierreToPDF(cierre)
+      alert('✅ PDF del cierre generado exitosamente')
+    } catch (error) {
+      console.error('Error generando PDF del cierre:', error)
+      alert('❌ Error al generar PDF del cierre')
     }
   }
 
@@ -180,10 +220,18 @@ export function Reports() {
                         </span>
                       </td>
                       <td className="px-4 py-3 flex justify-center gap-2">
-                        <button className="p-2 hover:bg-slate-100 rounded">
+                        <button 
+                          className="p-2 hover:bg-slate-100 rounded"
+                          onClick={() => console.log('Ver detalle:', closure)}
+                          title="Ver detalle"
+                        >
                           <Eye className="w-4 h-4 text-blue-600" />
                         </button>
-                        <button className="p-2 hover:bg-slate-100 rounded">
+                        <button 
+                          className="p-2 hover:bg-slate-100 rounded"
+                          onClick={() => handleExportCierrePDF(closure)}
+                          title="Descargar PDF"
+                        >
                           <Download className="w-4 h-4 text-blue-600" />
                         </button>
                       </td>
@@ -195,12 +243,23 @@ export function Reports() {
 
             <div className="flex gap-4 mt-6">
               <motion.div className="flex-1" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button variant="outline" className="w-full bg-transparent">
-                  Exportar a Excel
+                <Button 
+                  variant="outline" 
+                  className="w-full bg-transparent"
+                  onClick={handleExportExcel}
+                  disabled={exporting === 'excel'}
+                >
+                  {exporting === 'excel' ? 'Exportando...' : 'Exportar a Excel'}
                 </Button>
               </motion.div>
               <motion.div className="flex-1" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Generar PDF</Button>
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={handleExportPDF}
+                  disabled={exporting === 'pdf'}
+                >
+                  {exporting === 'pdf' ? 'Generando...' : 'Generar PDF'}
+                </Button>
               </motion.div>
             </div>
           </CardContent>
