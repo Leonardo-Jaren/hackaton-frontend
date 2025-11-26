@@ -5,7 +5,7 @@ import { apiClient } from './api'
 export interface Categoria {
   id: number
   nombre: string
-  tipo: 'ingreso' | 'egreso'
+  tipo: 'ingreso' | 'gasto'
   descripcion?: string
 }
 
@@ -24,7 +24,7 @@ export interface FondoCaja {
 
 export interface Transaccion {
   id: number
-  tipo: 'ingreso' | 'egreso'
+  tipo: 'ingreso' | 'gasto'
   monto: number
   descripcion: string
   fecha: string
@@ -39,7 +39,7 @@ export interface CreateTransaccionDTO {
   empresa: number
   categoria: number
   metodo_pago: number
-  tipo: 'ingreso' | 'egreso'
+  tipo: 'ingreso' | 'gasto'
   monto: number
   descripcion: string
   numero_comprobante?: string
@@ -83,6 +83,11 @@ export const finanzasService = {
     return response.data
   },
 
+  getFondoCajaActivo: async (empresaId: number) => {
+    const response = await apiClient.get(`/transacciones/fondo-caja/activo/?empresa_id=${empresaId}`)
+    return response.data
+  },
+
   registrarTransaccion: async (data: CreateTransaccionDTO) => {
     const response = await apiClient.post('/transacciones/registro/', data)
     return response.data
@@ -121,27 +126,37 @@ export const finanzasService = {
 
   // --- Cierre de Caja ---
   iniciarCierre: async (fondoCajaId: number) => {
-    const response = await apiClient.post('/iniciar/', { fondo_caja_id: fondoCajaId })
+    const response = await apiClient.post('/cierre_caja/iniciar/', { fondo_caja_id: fondoCajaId })
+    return response.data
+  },
+
+  getCierreActivo: async () => {
+    const response = await apiClient.get('/cierre_caja/activo/')
+    return response.data
+  },
+
+  listarCierres: async (empresaId: number) => {
+    const response = await apiClient.get(`/cierre_caja/listar/?empresa_id=${empresaId}`)
     return response.data
   },
 
   obtenerResumenCierre: async (cierreId: number) => {
-    const response = await apiClient.get<CierreCajaResumen>(`/resumen/${cierreId}/`)
+    const response = await apiClient.get<CierreCajaResumen>(`/cierre_caja/resumen/${cierreId}/`)
     return response.data
   },
 
   registrarEfectivoFisico: async (cierreId: number, monto: number) => {
-    const response = await apiClient.patch(`/efectivo/${cierreId}/`, { efectivo_fisico: monto })
+    const response = await apiClient.patch(`/cierre_caja/efectivo/${cierreId}/`, { efectivo_contado_fisico: monto })
     return response.data
   },
 
   finalizarCierre: async (cierreId: number) => {
-    const response = await apiClient.post(`/finalizar/${cierreId}/`)
+    const response = await apiClient.post(`/cierre_caja/finalizar/${cierreId}/`)
     return response.data
   },
   
   getDetalleCierre: async (cierreId: number) => {
-    const response = await apiClient.get(`/detalle/${cierreId}/`)
+    const response = await apiClient.get(`/cierre_caja/detalle/${cierreId}/`)
     return response.data
   }
 }
