@@ -101,16 +101,16 @@ export function LoginForm({ onSubmit, isLoading = false, error, onToggle }: Logi
                         </div>
 
                         <div className="flex justify-end">
-                            <button type="button" className="text-red-400 hover:text-red-300 text-xs md:text-sm transition-colors">¿Olvidaste tu contraseña?</button>
+                            <button type="button" className="text-blue-400 hover:text-red-300 text-xs md:text-sm transition-colors">¿Olvidaste tu contraseña?</button>
                         </div>
 
-                        {displayError && (<div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{displayError}</div>)}
+                        {displayError && (<div className="bg-red-50 border border-red-200 text-blue-700 px-4 py-3 rounded-lg text-sm">{displayError}</div>)}
 
-                        <button type="submit" disabled={isLoading} className="w-full bg-linear-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white py-2.5 md:py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm md:text-base">{isLoading ? (<div className="flex items-center justify-center gap-2"><div className="w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>Iniciando sesión...</div>) : ('Iniciar sesión')}</button>
+                        <button type="submit" disabled={isLoading} className="w-full bg-linear-to-r from-blue-600 to-blue-600 hover:from-blue-700 hover:to-blue-700 text-white py-2.5 md:py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm md:text-base">{isLoading ? (<div className="flex items-center justify-center gap-2"><div className="w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>Iniciando sesión...</div>) : ('Iniciar sesión')}</button>
                     </form>
 
                     <div className="mt-3 md:mt-6 text-center">
-                        <p className="text-gray-400 text-xs md:text-sm">¿No tienes una cuenta? <button onClick={() => onToggle?.()} className="text-red-400 hover:text-red-300 font-semibold transition-colors">Regístrate</button></p>
+                        <p className="text-gray-400 text-xs md:text-sm">¿No tienes una cuenta? <button onClick={() => onToggle?.()} className="text-blue-400 hover:text-red-300 font-semibold transition-colors">Regístrate</button></p>
                     </div>
 
             <div className="mt-4 md:mt-8 flex justify-center gap-6">
