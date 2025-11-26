@@ -1,4 +1,5 @@
-import { Download, Eye } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Download, Eye, Loader2 } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card"
 import { Button } from "../../../components/ui/Button"
@@ -15,12 +16,32 @@ export function Reports() {
     { date: "2024-11-23", aiBalance: 490, physicalBalance: 495, difference: 5, status: "Con Errores" },
   ]
 
-  const monthlyData = [
-    { name: "Nov 1", ingresos: 450, egresos: 120 },
-    { name: "Nov 8", ingresos: 680, egresos: 200 },
-    { name: "Nov 15", ingresos: 620, egresos: 180 },
-    { name: "Nov 22", ingresos: 750, egresos: 250 },
-  ]
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const fetchData = async () => {
+    if (!user?.empresaId) return
+    try {
+      setLoading(true)
+      const data = await finanzasService.listarCierres(user.empresaId)
+      setClosures(data)
+      
+      // Prepare chart data from closures (last 7)
+      const last7 = data.slice(0, 7).reverse()
+      const chart = last7.map((c: any) => ({
+        name: new Date(c.fecha_cierre || c.fecha_apertura).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        ingresos: parseFloat(c.total_ingresos),
+        egresos: parseFloat(c.total_egresos)
+      }))
+      setChartData(chart)
+
+    } catch (error) {
+      console.error("Error fetching reports:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const expensesData = [
     { name: "Insumos", value: 35, color: "#3b82f6" },
@@ -128,17 +149,17 @@ export function Reports() {
       <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8" variants={itemVariants}>
         <Card>
           <CardHeader>
-            <CardTitle>Ingresos vs Egresos (Mensual)</CardTitle>
+            <CardTitle>Ingresos vs Egresos (Últimos Cierres)</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyData}>
+              <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="ingresos" fill="#22c55e" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="egresos" fill="#ef4444" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="ingresos" fill="#22c55e" radius={[8, 8, 0, 0]} name="Ingresos" />
+                <Bar dataKey="egresos" fill="#ef4444" radius={[8, 8, 0, 0]} name="Egresos" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -155,40 +176,47 @@ export function Reports() {
                   data={expensesData}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name} ${value}%`}
+                  innerRadius={60}
                   outerRadius={80}
-                  fill="#8884d8"
+                  paddingAngle={5}
                   dataKey="value"
                 >
                   {expensesData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
+                <Tooltip />
               </PieChart>
             </ResponsiveContainer>
+            <div className="flex justify-center gap-4 mt-4">
+              {expensesData.map((entry, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
+                  <span className="text-sm text-slate-600">{entry.name}</span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* Tabla de Cierres */}
+      {/* Tabla Historial */}
       <motion.div variants={itemVariants}>
         <Card>
           <CardHeader>
             <CardTitle>Historial de Cierres</CardTitle>
-            <CardDescription>Últimos 4 cierres de caja</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200">
-                    <th className="px-4 py-3 text-left font-semibold">Fecha</th>
-                    <th className="px-4 py-3 text-left font-semibold">Saldo IA</th>
-                    <th className="px-4 py-3 text-left font-semibold">Saldo Físico</th>
-                    <th className="px-4 py-3 text-left font-semibold">Diferencia</th>
-                    <th className="px-4 py-3 text-left font-semibold">Estado</th>
-                    <th className="px-4 py-3 text-center font-semibold">Acciones</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">Fecha</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">Saldo Sistema</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">Saldo Físico</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">Diferencia</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">Estado</th>
+                    <th className="px-4 py-3 text-center font-semibold text-slate-900">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
