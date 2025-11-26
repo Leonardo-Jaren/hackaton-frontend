@@ -1,7 +1,7 @@
 import { AlertCircle, CheckCircle2 } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card"
-import { Button } from "../../../components/ui/button"
+import { Button } from "../../../components/ui/Button"
 
 export function CashClosure() {
   const containerVariants = {
