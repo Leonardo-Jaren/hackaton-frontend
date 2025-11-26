@@ -29,8 +29,8 @@ export function AuthLayout({ children, illustration }: AuthLayoutProps) {
         ),
         imageSrc: undefined,
         imageAlt: undefined,
-        title: 'Cultura Huanuqueña',
-        description: 'Descubre las vibrantes tradiciones y la rica herencia de Huánuco',
+        title: 'SmarthClose AI',
+        description: 'Bienvenido a tu sistema de cierre de caja inteligente',
         gradientFrom: 'from-orange-500',
         gradientVia: 'via-red-600',
         gradientTo: 'to-purple-700'
