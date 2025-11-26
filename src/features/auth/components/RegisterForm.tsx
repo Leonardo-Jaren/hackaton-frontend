@@ -69,9 +69,9 @@ export function RegisterForm({ onSubmit, isLoading, error, onToggle }: RegisterF
     return (
         <>
             <div className="mb-4 md:mb-8">
-                <h2 className="text-white text-xs md:text-sm font-medium mb-1 md:mb-2 tracking-wide">Cultura Huanuqueña Interactiva</h2>
+                <h2 className="text-white text-xs md:text-sm font-medium mb-1 md:mb-2 tracking-wide">SmarthClose AI</h2>
                 <h1 className="text-white text-3xl md:text-5xl font-bold mb-2 md:mb-4">¡Únete a nosotros!</h1>
-                <p className="text-gray-400 text-xs md:text-sm">Crea tu cuenta y comienza tu aventura por Huánuco.</p>
+                <p className="text-gray-400 text-xs md:text-sm">Crea tu cuenta y comienza en el sistema de cierre de caja inteligente</p>
             </div>
 
             <button
@@ -98,13 +98,10 @@ export function RegisterForm({ onSubmit, isLoading, error, onToggle }: RegisterF
                 )}
             </button>
 
-            <div className="relative mb-3 md:mb-6">
-                <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-700"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-linear-to-br from-gray-900 to-black text-gray-500">OR</span>
-                </div>
+            <div className="flex items-center gap-4 mb-3 md:mb-6">
+                <div className="h-px bg-gray-700 flex-1"></div>
+                <span className="text-sm text-gray-500">O</span>
+                <div className="h-px bg-gray-700 flex-1"></div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-2 md:space-y-4">
@@ -119,7 +116,7 @@ export function RegisterForm({ onSubmit, isLoading, error, onToggle }: RegisterF
                             onChange={handleChange}
                             placeholder="tu@email.com"
                             required
-                            className="w-full bg-gray-800 text-white pl-10 md:pl-12 pr-4 py-2.5 md:py-3 text-sm md:text-base rounded-xl border border-gray-700 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all"
+                            className="w-full bg-gray-800 text-white pl-10 md:pl-12 pr-4 py-2.5 md:py-3 text-sm md:text-base rounded-xl border border-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                         />
                     </div>
                 </div>
@@ -136,7 +133,7 @@ export function RegisterForm({ onSubmit, isLoading, error, onToggle }: RegisterF
                             placeholder="Mínimo 8 caracteres"
                             required
                             minLength={8}
-                            className="w-full bg-gray-800 text-white pl-10 md:pl-12 pr-10 md:pr-12 py-2.5 md:py-3 text-sm md:text-base rounded-xl border border-gray-700 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all"
+                            className="w-full bg-gray-800 text-white pl-10 md:pl-12 pr-10 md:pr-12 py-2.5 md:py-3 text-sm md:text-base rounded-xl border border-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                         />
                         <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
                             {showPassword ? <EyeOff className="w-4 h-4 md:w-5 md:h-5" /> : <Eye className="w-4 h-4 md:w-5 md:h-5" />}
@@ -156,7 +153,7 @@ export function RegisterForm({ onSubmit, isLoading, error, onToggle }: RegisterF
                             placeholder="Confirma tu contraseña"
                             required
                             minLength={8}
-                            className="w-full bg-gray-800 text-white pl-10 md:pl-12 pr-10 md:pr-12 py-2.5 md:py-3 text-sm md:text-base rounded-xl border border-gray-700 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all"
+                            className="w-full bg-gray-800 text-white pl-10 md:pl-12 pr-10 md:pr-12 py-2.5 md:py-3 text-sm md:text-base rounded-xl border border-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                         />
                         <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
                             {showConfirmPassword ? <EyeOff className="w-4 h-4 md:w-5 md:h-5" /> : <Eye className="w-4 h-4 md:w-5 md:h-5" />}
@@ -170,7 +167,7 @@ export function RegisterForm({ onSubmit, isLoading, error, onToggle }: RegisterF
                     </div>
                 )}
 
-                <button type="submit" disabled={isLoading} className="w-full bg-linear-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white py-2.5 md:py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm md:text-base">
+                <button type="submit" disabled={isLoading} className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 md:py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm md:text-base shadow-lg shadow-blue-600/20">
                     {isLoading ? (
                         <div className="flex items-center justify-center gap-2">
                             <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -183,7 +180,7 @@ export function RegisterForm({ onSubmit, isLoading, error, onToggle }: RegisterF
             </form>
 
             <div className="mt-3 md:mt-6 text-center">
-                <p className="text-gray-400 text-xs md:text-sm">¿Ya tienes una cuenta? <button onClick={() => onToggle?.()} className="text-red-400 hover:text-red-300 font-semibold transition-colors">Inicia sesión</button></p>
+                <p className="text-gray-400 text-xs md:text-sm">¿Ya tienes una cuenta? <button onClick={() => onToggle?.()} className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">Inicia sesión</button></p>
             </div>
 
             <div className="mt-4 md:mt-8 flex justify-center gap-6">
@@ -192,4 +189,4 @@ export function RegisterForm({ onSubmit, isLoading, error, onToggle }: RegisterF
             </div>
         </>
     )
-}
+} 

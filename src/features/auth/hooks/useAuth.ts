@@ -34,7 +34,10 @@ export function useAuth() {
                 id: response.user.id?.toString() || '1',
                 username: response.user.first_name || response.user.email?.split('@')[0] || response.user.email,
                 email: response.user.email,
-                avatar: response.user.avatar_url
+                avatar: response.user.avatar_url,
+                empresaId: response.user.empresa,
+                empresaNombre: response.user.empresa_nombre,
+                rol: response.user.rol
             }
             
             setUser(userFormatted)
@@ -70,7 +73,10 @@ export function useAuth() {
                 id: response.user.id?.toString() || '1',
                 username: response.user.email?.split('@')[0] || response.user.email,
                 email: response.user.email,
-                avatar: response.user.avatar_url
+                avatar: response.user.avatar_url,
+                empresaId: response.user.empresa,
+                empresaNombre: response.user.empresa_nombre,
+                rol: response.user.rol
             }
             
             setUser(userFormatted)
