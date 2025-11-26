@@ -11,8 +11,9 @@ export default function FinanzasPage() {
   const [currentPage, setCurrentPage] = useState<PageType>("dashboard")
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-slate-50 text-slate-900">
       <Sidebar currentPage={currentPage} setCurrentPage={(page) => setCurrentPage(page as PageType)} />
+
 
       <main className="flex-1 overflow-auto">
         {currentPage === "dashboard" && <Dashboard />}
