@@ -33,6 +33,22 @@ export interface Transaccion {
   metodo_pago?: number
   metodo_pago_nombre?: string
   estado?: string
+  procesado_ia?: boolean
+  confianza_ia?: number
+}
+
+export interface ResultadoIA {
+  id: number
+  tipo: 'ingreso' | 'egreso'
+  monto: number
+  descripcion: string
+  categoria_sugerida?: string
+  categoria_sugerida_nombre?: string
+  metodo_pago_sugerido?: string
+  metodo_pago_sugerido_nombre?: string
+  confianza: number
+  convertido_transaccion: boolean
+  numero_comprobante?: string
 }
 
 export interface CreateTransaccionDTO {
@@ -124,19 +140,25 @@ export const finanzasService = {
     return response.data
   },
 
+  getResultadosIA: async (empresaId: number, archivoId?: number) => {
+    const params = new URLSearchParams()
+    params.append('empresa_id', empresaId.toString())
+    if (archivoId) params.append('archivo_id', archivoId.toString())
+    
+    const response = await apiClient.get<{ resultados: ResultadoIA[] }>('/transacciones/resultados-ia/', { params })
+    return response.data
+  },
+
+  convertirResultadoIA: async (resultadoId: number) => {
+    const response = await apiClient.post('/transacciones/resultados-ia/', {
+      resultado_id: resultadoId
+    })
+    return response.data
+  },
+
   // --- Cierre de Caja ---
   iniciarCierre: async (fondoCajaId: number) => {
     const response = await apiClient.post('/cierre_caja/iniciar/', { fondo_caja_id: fondoCajaId })
-    return response.data
-  },
-
-  getCierreActivo: async () => {
-    const response = await apiClient.get('/cierre_caja/activo/')
-    return response.data
-  },
-
-  listarCierres: async (empresaId: number) => {
-    const response = await apiClient.get(`/cierre_caja/listar/?empresa_id=${empresaId}`)
     return response.data
   },
 
@@ -146,7 +168,9 @@ export const finanzasService = {
   },
 
   registrarEfectivoFisico: async (cierreId: number, monto: number) => {
-    const response = await apiClient.patch(`/cierre_caja/efectivo/${cierreId}/`, { efectivo_contado_fisico: monto })
+    const response = await apiClient.patch(`/cierre_caja/efectivo/${cierreId}/`, { 
+      efectivo_contado_fisico: monto 
+    })
     return response.data
   },
 

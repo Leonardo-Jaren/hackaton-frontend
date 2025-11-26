@@ -1,18 +1,19 @@
 import { useState, useEffect, useRef } from "react"
-import { Upload, Camera, Plus, Trash2, Edit2, Loader2 } from "lucide-react"
+import { Upload, Camera, Plus, Trash2, Edit2, Loader2, CheckCircle, AlertCircle } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card"
 import { Button } from "../../../components/ui/Button"
 import { Modal } from "../../../components/ui/Modal"
 import { useAuthStore } from "../../../store/useAuthStore"
-import { finanzasService, type Transaccion, type Categoria, type MetodoPago } from "../../../services/finanzasService"
+import { finanzasService, type Transaccion, type Categoria, type MetodoPago, type ResultadoIA } from "../../../services/finanzasService"
 
 export function TransactionRegistry() {
-  const { user } = useAuthStore()
+  const { user, setUser } = useAuthStore()
   const [transactions, setTransactions] = useState<Transaccion[]>([])
+  const [resultadosIA, setResultadosIA] = useState<ResultadoIA[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
-  const [activeFondo, setActiveFondo] = useState<any>(null)
+  const [processingIA, setProcessingIA] = useState(false)
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -34,26 +35,35 @@ export function TransactionRegistry() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  useEffect(() => {
+    // Si el usuario no tiene empresaId, asignar empresa por defecto (ID 1)
+    if (user && !user.empresaId) {
+      console.warn('⚠️ Usuario sin empresa asignada, asignando empresa ID 1')
+      setUser({ 
+        ...user, 
+        empresaId: 1,
+        empresaNombre: 'Mi Empresa Test S.A.C.'
+      })
+    }
+    fetchData()
+  }, [])
+
   const fetchData = async () => {
     if (!user?.empresaId) return
 
     try {
       setLoading(true)
-      const [transactionsRes, fondoRes, categoriasRes, metodosRes] = await Promise.all([
-        finanzasService.getTransacciones(user.empresaId),
-        finanzasService.getFondoCajaActivo(user.empresaId),
+      console.log('🔄 Refrescando datos...')
+      const [cats, methods, txData] = await Promise.all([
         finanzasService.getCategorias(),
         finanzasService.getMetodosPago()
       ])
       
-      console.log('Fondo Activo:', fondoRes)
-      console.log('Transacciones:', transactionsRes)
-
-      setTransactions(transactionsRes.transacciones)
-      // Ensure activeFondo is null if empty
-      setActiveFondo(fondoRes && Object.keys(fondoRes).length > 0 ? fondoRes : null)
-      setCategorias(categoriasRes)
-      setMetodosPago(metodosRes)
+      console.log('📥 Transacciones recibidas:', txData.transacciones.length, txData.transacciones)
+      
+      setCategorias(cats)
+      setMetodosPago(methods)
+      setTransactions(txData.transacciones)
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -69,18 +79,89 @@ export function TransactionRegistry() {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !user?.empresaId) return
+    
+    console.log('🔍 Debug - file:', file)
+    console.log('🔍 Debug - user:', user)
+    console.log('🔍 Debug - empresaId:', user?.empresaId)
+    
+    if (!file) {
+      console.warn('⚠️ No se seleccionó ningún archivo')
+      return
+    }
+    
+    if (!user?.empresaId) {
+      console.error('❌ No hay empresaId en el usuario')
+      alert('Error: No se encontró la empresa asociada al usuario. Por favor, inicia sesión nuevamente.')
+      return
+    }
 
     try {
       setUploading(true)
-      await finanzasService.subirArchivoIA(user.empresaId, file)
-      // Refresh transactions after upload (assuming backend processes it or we poll)
-      // For now just refresh list
+      
+      console.log('📤 Subiendo archivo:', file.name)
+      
+      // Subir archivo y procesar con IA
+      const response = await finanzasService.subirArchivoIA(user.empresaId, file)
+      
+      console.log('✅ Respuesta del backend:', response)
+      
+      // Obtener los resultados procesados por la IA
+      const resultadosResponse = await finanzasService.getResultadosIA(user.empresaId)
+      
+      console.log('📊 Resultados de IA obtenidos:', resultadosResponse)
+      
+      setResultadosIA(resultadosResponse.resultados || [])
+      
+      const resultados = resultadosResponse.resultados || []
+      
+      // Convertir automáticamente los resultados a transacciones
+      if (resultados.length > 0) {
+        setProcessingIA(true)
+        
+        console.log(`🤖 Procesando ${resultados.length} resultados...`)
+        
+        let convertidos = 0
+        
+        for (const resultado of resultados) {
+          // Verificar que no esté ya convertido y tenga buena confianza
+          if (!resultado.convertido_transaccion && resultado.confianza >= 70) {
+            try {
+              console.log(`   ✓ Convirtiendo resultado #${resultado.id} (${resultado.confianza}% confianza)`)
+              await finanzasService.convertirResultadoIA(resultado.id)
+              convertidos++
+            } catch (error) {
+              console.error(`   ✗ Error convirtiendo resultado #${resultado.id}:`, error)
+            }
+          } else {
+            console.log(`   ⊘ Saltando resultado #${resultado.id} (ya convertido o baja confianza: ${resultado.confianza}%)`)
+          }
+        }
+        
+        setProcessingIA(false)
+        
+        console.log(`✨ Proceso completo: ${convertidos}/${resultados.length} convertidos`)
+        
+        // Esperar un momento antes de refrescar para que el backend termine de guardar
+        console.log('⏳ Esperando antes de refrescar...')
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+      
+      // Refrescar lista de transacciones
+      console.log('🔄 Refrescando transacciones...')
       await fetchData()
-      alert("Archivo subido exitosamente. La IA está procesando los datos.")
-    } catch (error) {
-      console.error("Error uploading file:", error)
-      alert("Error al subir el archivo")
+      
+      console.log('✅ Transacciones refrescadas')
+      
+      const mensaje = resultados.length > 0 
+        ? `✅ Archivo procesado exitosamente!\n📊 Se detectaron ${resultados.length} transacciones`
+        : '⚠️ Archivo procesado pero no se detectaron transacciones'
+      
+      alert(mensaje)
+      
+    } catch (error: any) {
+      console.error("❌ Error uploading file:", error)
+      const errorMsg = error.response?.data?.error || error.message || "Error desconocido"
+      alert(`❌ Error al procesar el archivo:\n${errorMsg}\n\nVerifica que sea un Excel (.xlsx) o imagen (.jpg, .png)`)
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -208,42 +289,68 @@ export function TransactionRegistry() {
         <p className="text-slate-500">Carga y gestiona todas tus transacciones del día</p>
       </motion.div>
 
-      {loading ? (
-        <div className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="h-32 bg-slate-100 rounded-xl animate-pulse border border-slate-200" />
-            <div className="h-32 bg-slate-100 rounded-xl animate-pulse border border-slate-200" />
+      {/* Información de procesamiento IA */}
+      <motion.div 
+        variants={itemVariants}
+        className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 mt-0.5">
+            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-200">
-              <div className="h-6 w-48 bg-slate-100 rounded animate-pulse" />
-            </div>
-            <div className="p-6 space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 w-full bg-slate-50 rounded-lg animate-pulse" />
-              ))}
-            </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-blue-900 mb-1">Procesamiento Inteligente con IA</h3>
+            <p className="text-sm text-blue-700">
+              Nuestro sistema usa <strong>OpenAI GPT-4o</strong> para extraer y clasificar automáticamente tus transacciones. 
+              El proceso puede tardar entre <strong>30 segundos y 2 minutos</strong> dependiendo del archivo.
+            </p>
           </div>
         </div>
-      ) : !activeFondo ? (
-        <motion.div variants={itemVariants} className="mb-8">
-          <Card className="bg-orange-50 border-orange-200">
-            <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                <Plus className="w-8 h-8 text-orange-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-orange-900 mb-2">Caja Cerrada</h3>
-              <p className="text-orange-700 mb-6 max-w-md">
-                No hay una caja abierta actualmente. Debes aperturar la caja para comenzar a registrar transacciones.
-              </p>
-              <Button 
-                onClick={() => setIsFondoModalOpen(true)}
-                className="bg-orange-600 hover:bg-orange-700 text-white"
-              >
-                Aperturar Caja
-              </Button>
-            </CardContent>
-          </Card>
+      </motion.div>
+
+      {/* Opciones de Carga */}
+      <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" variants={itemVariants}>
+        <motion.div whileHover={{ scale: uploading ? 1 : 1.02 }} whileTap={{ scale: uploading ? 1 : 0.98 }}>
+          <Button 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="w-full h-32 bg-blue-600 hover:bg-blue-700 text-white flex flex-col items-center justify-center gap-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <span className="text-sm">Procesando con IA...</span>
+                <span className="text-xs opacity-75">Esto puede tardar hasta 2 minutos</span>
+              </>
+            ) : (
+              <>
+                <Upload className="w-8 h-8" />
+                Subir desde Excel
+              </>
+            )}
+          </Button>
+        </motion.div>
+        <motion.div whileHover={{ scale: uploading ? 1 : 1.02 }} whileTap={{ scale: uploading ? 1 : 0.98 }}>
+          <Button 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="w-full h-32 bg-green-600 hover:bg-green-700 text-white flex flex-col items-center justify-center gap-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <span className="text-sm">Procesando con IA...</span>
+                <span className="text-xs opacity-75">Esto puede tardar hasta 2 minutos</span>
+              </>
+            ) : (
+              <>
+                <Camera className="w-8 h-8" />
+                Subir desde Foto
+              </>
+            )}
+          </Button>
         </motion.div>
       ) : (
         <div className="space-y-8">
@@ -271,40 +378,96 @@ export function TransactionRegistry() {
             </motion.div>
           </div>
 
-          {/* Tabla de Transacciones */}
-          <div>
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>Transacciones Cargadas</CardTitle>
-                <CardDescription>Verifica y edita tus transacciones antes del cierre</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-200">
-                        <th className="px-4 py-3 text-left font-semibold text-slate-900">Fecha</th>
-                        <th className="px-4 py-3 text-left font-semibold text-slate-900">Tipo</th>
-                        <th className="px-4 py-3 text-left font-semibold text-slate-900">Descripción</th>
-                        <th className="px-4 py-3 text-left font-semibold text-slate-900">Monto</th>
-                        <th className="px-4 py-3 text-left font-semibold text-slate-900">Método</th>
-                        <th className="px-4 py-3 text-left font-semibold text-slate-900">Estado</th>
-                        <th className="px-4 py-3 text-center font-semibold text-slate-900">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {transactions.length === 0 ? (
-                        <tr>
-                          <td colSpan={7} className="text-center py-8 text-slate-500">No hay transacciones registradas hoy</td>
-                        </tr>
-                      ) : (
-                        transactions.map((tx, index) => (
-                          <motion.tr 
-                            key={tx.id} 
-                            className="border-b border-slate-200 hover:bg-slate-50 transition-colors"
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05 }}
+      {/* Tabla de Transacciones */}
+      <motion.div variants={itemVariants}>
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Transacciones Cargadas</CardTitle>
+            <CardDescription>Verifica y edita tus transacciones antes del cierre</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">Fecha</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">Tipo</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">Descripción</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">Monto</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">Método</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">Estado</th>
+                    <th className="px-4 py-3 text-center font-semibold text-slate-900">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-8 text-slate-500">Cargando transacciones...</td>
+                    </tr>
+                  ) : transactions.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-8 text-slate-500">No hay transacciones registradas hoy</td>
+                    </tr>
+                  ) : (
+                    transactions.map((tx, index) => (
+                      <motion.tr 
+                        key={tx.id} 
+                        className="border-b border-slate-200 hover:bg-slate-50 transition-colors"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        <td className="px-4 py-3">{tx.fecha}</td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                              tx.tipo === "ingreso" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {tx.tipo.charAt(0).toUpperCase() + tx.tipo.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            {tx.descripcion}
+                            {tx.procesado_ia && (
+                              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" />
+                                IA
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div>
+                            <span className="font-medium">S/ {Number(tx.monto).toFixed(2)}</span>
+                            {tx.procesado_ia && tx.confianza_ia && (
+                              <div className="text-xs text-slate-500">
+                                Confianza: {tx.confianza_ia}%
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">{tx.metodo_pago_nombre || '-'}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            tx.procesado_ia 
+                              ? 'bg-purple-100 text-purple-700' 
+                              : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {tx.procesado_ia ? 'Procesado IA' : 'Manual'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 flex justify-center gap-2">
+                          <button 
+                            onClick={() => openEditModal(tx)}
+                            className="p-2 hover:bg-slate-100 rounded"
+                          >
+                            <Edit2 className="w-4 h-4 text-blue-600" />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(tx.id)}
+                            className="p-2 hover:bg-slate-100 rounded"
                           >
                             <td className="px-4 py-3">{tx.fecha}</td>
                             <td className="px-4 py-3">
@@ -498,44 +661,67 @@ export function TransactionRegistry() {
         </form>
       </Modal>
 
-      {/* Modal Apertura Caja */}
-      <Modal
-        isOpen={isFondoModalOpen}
-        onClose={() => setIsFondoModalOpen(false)}
-        title="Aperturar Caja"
-      >
-        <form onSubmit={handleCreateFondo} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Monto Inicial <span className="text-slate-400 font-normal">(Opcional)</span>
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={fondoMonto}
-              onChange={(e) => setFondoMonto(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="0.00"
-            />
-            <p className="text-xs text-slate-500 mt-1">Si se deja vacío, se iniciará con S/ 0.00</p>
-          </div>
-          <div className="flex justify-end gap-3 mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsFondoModalOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              Aperturar Caja
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      {/* Resumen */}
+      <motion.div variants={itemVariants}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Resumen Rápido</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              <motion.div whileHover={{ y: -5 }} className="bg-green-50 p-4 rounded-lg">
+                <p className="text-sm text-slate-500 mb-1">Total Ingresos</p>
+                <p className="text-2xl font-bold text-green-600">
+                  S/ {transactions
+                    .filter(t => t.tipo === 'ingreso')
+                    .reduce((acc, curr) => acc + Number(curr.monto), 0)
+                    .toFixed(2)}
+                </p>
+              </motion.div>
+              <motion.div whileHover={{ y: -5 }} className="bg-red-50 p-4 rounded-lg">
+                <p className="text-sm text-slate-500 mb-1">Total Egresos</p>
+                <p className="text-2xl font-bold text-red-600">
+                  S/ {transactions
+                    .filter(t => t.tipo === 'egreso')
+                    .reduce((acc, curr) => acc + Number(curr.monto), 0)
+                    .toFixed(2)}
+                </p>
+              </motion.div>
+              <motion.div whileHover={{ y: -5 }} className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm text-slate-500 mb-1">Saldo Parcial</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  S/ {transactions
+                    .reduce((acc, curr) => acc + (curr.tipo === 'ingreso' ? Number(curr.monto) : -Number(curr.monto)), 0)
+                    .toFixed(2)}
+                </p>
+              </motion.div>
+            </div>
+            
+            {/* Indicador de transacciones procesadas por IA */}
+            {transactions.some(t => t.procesado_ia) && (
+              <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <div className="flex items-center gap-2 text-purple-700">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    {transactions.filter(t => t.procesado_ia).length} transacciones procesadas automáticamente por IA
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            {processingIA && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm font-medium">
+                    Procesando resultados de IA...
+                  </span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
     </motion.div>
   )
 }
