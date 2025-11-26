@@ -4,7 +4,6 @@ import { Dashboard } from "../components/Dashboard"
 import { TransactionRegistry } from "../components/TransactionRegistry"
 import { CashClosure } from "../components/CashClosure"
 import { Reports } from "../components/Reports"
-import { Settings } from "lucide-react"
 
 type PageType = "dashboard" | "transactions" | "closure" | "reports" | "settings" | "help"
 
@@ -21,7 +20,7 @@ export default function FinanzasPage() {
         {currentPage === "transactions" && <TransactionRegistry />}
         {currentPage === "closure" && <CashClosure />}
         {currentPage === "reports" && <Reports />}
-        {currentPage === "settings" && <Settings />}
+        {currentPage === "settings" && <div className="p-8">Configuración (En construcción)</div>}
         {currentPage === "help" && <div className="p-8">Ayuda (En construcción)</div>}
       </main>
     </div>
