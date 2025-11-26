@@ -251,26 +251,67 @@ export function TransactionRegistry() {
         <p className="text-slate-500">Carga y gestiona todas tus transacciones del día</p>
       </motion.div>
 
+      {/* Información de procesamiento IA */}
+      <motion.div 
+        variants={itemVariants}
+        className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 mt-0.5">
+            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-blue-900 mb-1">Procesamiento Inteligente con IA</h3>
+            <p className="text-sm text-blue-700">
+              Nuestro sistema usa <strong>OpenAI GPT-4o</strong> para extraer y clasificar automáticamente tus transacciones. 
+              El proceso puede tardar entre <strong>30 segundos y 2 minutos</strong> dependiendo del archivo.
+            </p>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Opciones de Carga */}
       <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" variants={itemVariants}>
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+        <motion.div whileHover={{ scale: uploading ? 1 : 1.02 }} whileTap={{ scale: uploading ? 1 : 0.98 }}>
           <Button 
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="w-full h-32 bg-blue-600 hover:bg-blue-700 text-white flex flex-col items-center justify-center gap-3 text-lg font-semibold"
+            className="w-full h-32 bg-blue-600 hover:bg-blue-700 text-white flex flex-col items-center justify-center gap-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {uploading ? <Loader2 className="w-8 h-8 animate-spin" /> : <Upload className="w-8 h-8" />}
-            {uploading ? "Subiendo..." : "Subir desde Excel"}
+            {uploading ? (
+              <>
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <span className="text-sm">Procesando con IA...</span>
+                <span className="text-xs opacity-75">Esto puede tardar hasta 2 minutos</span>
+              </>
+            ) : (
+              <>
+                <Upload className="w-8 h-8" />
+                Subir desde Excel
+              </>
+            )}
           </Button>
         </motion.div>
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+        <motion.div whileHover={{ scale: uploading ? 1 : 1.02 }} whileTap={{ scale: uploading ? 1 : 0.98 }}>
           <Button 
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="w-full h-32 bg-green-600 hover:bg-green-700 text-white flex flex-col items-center justify-center gap-3 text-lg font-semibold"
+            className="w-full h-32 bg-green-600 hover:bg-green-700 text-white flex flex-col items-center justify-center gap-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {uploading ? <Loader2 className="w-8 h-8 animate-spin" /> : <Camera className="w-8 h-8" />}
-            {uploading ? "Subiendo..." : "Subir desde Foto"}
+            {uploading ? (
+              <>
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <span className="text-sm">Procesando con IA...</span>
+                <span className="text-xs opacity-75">Esto puede tardar hasta 2 minutos</span>
+              </>
+            ) : (
+              <>
+                <Camera className="w-8 h-8" />
+                Subir desde Foto
+              </>
+            )}
           </Button>
         </motion.div>
       </motion.div>
