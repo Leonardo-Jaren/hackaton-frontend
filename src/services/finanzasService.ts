@@ -5,7 +5,7 @@ import { apiClient } from './api'
 export interface Categoria {
   id: number
   nombre: string
-  tipo: 'ingreso' | 'egreso'
+  tipo: 'ingreso' | 'gasto'
   descripcion?: string
 }
 
@@ -24,7 +24,7 @@ export interface FondoCaja {
 
 export interface Transaccion {
   id: number
-  tipo: 'ingreso' | 'egreso'
+  tipo: 'ingreso' | 'gasto'
   monto: number
   descripcion: string
   fecha: string
@@ -55,7 +55,7 @@ export interface CreateTransaccionDTO {
   empresa: number
   categoria: number
   metodo_pago: number
-  tipo: 'ingreso' | 'egreso'
+  tipo: 'ingreso' | 'gasto'
   monto: number
   descripcion: string
   numero_comprobante?: string
@@ -96,6 +96,11 @@ export const finanzasService = {
   // --- Transacciones ---
   crearFondoCaja: async (data: CreateFondoCajaDTO) => {
     const response = await apiClient.post('/transacciones/fondo-caja/', data)
+    return response.data
+  },
+
+  getFondoCajaActivo: async (empresaId: number) => {
+    const response = await apiClient.get(`/transacciones/fondo-caja/activo/?empresa_id=${empresaId}`)
     return response.data
   },
 
@@ -159,6 +164,7 @@ export const finanzasService = {
 
   obtenerResumenCierre: async (cierreId: number) => {
     const response = await apiClient.get<CierreCajaResumen>(`/cierre_caja/resumen/${cierreId}/`)
+    const response = await apiClient.get<CierreCajaResumen>(`/cierre_caja/resumen/${cierreId}/`)
     return response.data
   },
 
@@ -171,10 +177,12 @@ export const finanzasService = {
 
   finalizarCierre: async (cierreId: number) => {
     const response = await apiClient.post(`/cierre_caja/finalizar/${cierreId}/`)
+    const response = await apiClient.post(`/cierre_caja/finalizar/${cierreId}/`)
     return response.data
   },
   
   getDetalleCierre: async (cierreId: number) => {
+    const response = await apiClient.get(`/cierre_caja/detalle/${cierreId}/`)
     const response = await apiClient.get(`/cierre_caja/detalle/${cierreId}/`)
     return response.data
   }

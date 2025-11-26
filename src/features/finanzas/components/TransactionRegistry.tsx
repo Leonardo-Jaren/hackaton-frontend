@@ -3,6 +3,7 @@ import { Upload, Camera, Plus, Trash2, Edit2, Loader2, CheckCircle, AlertCircle 
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card"
 import { Button } from "../../../components/ui/Button"
+import { Button } from "../../../components/ui/Button"
 import { Modal } from "../../../components/ui/Modal"
 import { useAuthStore } from "../../../store/useAuthStore"
 import { finanzasService, type Transaccion, type Categoria, type MetodoPago, type ResultadoIA } from "../../../services/finanzasService"
@@ -17,9 +18,12 @@ export function TransactionRegistry() {
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isFondoModalOpen, setIsFondoModalOpen] = useState(false)
+  const [fondoMonto, setFondoMonto] = useState('')
+  
   const [editingId, setEditingId] = useState<number | null>(null)
   const [formData, setFormData] = useState({
-    tipo: 'ingreso' as 'ingreso' | 'egreso',
+    tipo: 'ingreso' as 'ingreso' | 'gasto',
     monto: '',
     descripcion: '',
     categoria: '',
@@ -47,6 +51,7 @@ export function TransactionRegistry() {
 
   const fetchData = async () => {
     if (!user?.empresaId) return
+
     try {
       setLoading(true)
       console.log('🔄 Refrescando datos...')
@@ -62,11 +67,17 @@ export function TransactionRegistry() {
       setMetodosPago(methods)
       setTransactions(txData.transacciones)
     } catch (error) {
-      console.error("Error fetching data:", error)
+      console.error('Error fetching data:', error)
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (user?.empresaId) {
+      fetchData()
+    }
+  }, [user?.empresaId])
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -221,6 +232,25 @@ export function TransactionRegistry() {
       categoria: '',
       metodo_pago: ''
     })
+  }
+
+  const handleCreateFondo = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user?.empresaId) return
+
+    try {
+      const montoInicial = fondoMonto ? parseFloat(fondoMonto) : 0
+      await finanzasService.crearFondoCaja({
+        empresa: user.empresaId,
+        monto: montoInicial
+      })
+      setIsFondoModalOpen(false)
+      setFondoMonto('')
+      fetchData()
+    } catch (error) {
+      console.error('Error creating fondo:', error)
+      alert('Error al abrir la caja')
+    }
   }
 
   const containerVariants = {
@@ -427,22 +457,68 @@ export function TransactionRegistry() {
               </table>
             </div>
 
-            {/* Agregar Fila */}
-            <motion.button 
-              onClick={() => {
-                resetForm()
-                setIsModalOpen(true)
-              }}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-lg text-blue-600 hover:bg-slate-50 transition-colors font-medium flex items-center justify-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              Añadir Transacción Manual
-            </motion.button>
-          </CardContent>
-        </Card>
-      </motion.div>
+                {/* Agregar Fila */}
+                <motion.button 
+                  onClick={() => {
+                    resetForm()
+                    setIsModalOpen(true)
+                  }}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-lg text-blue-600 hover:bg-slate-50 transition-colors font-medium flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  Añadir Transacción Manual
+                </motion.button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Resumen */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Resumen Rápido</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4">
+                  <motion.div whileHover={{ y: -5 }} className="bg-green-50 p-4 rounded-lg">
+                    <p className="text-sm text-slate-500 mb-1">Total Ingresos</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      S/ {transactions
+                        .filter(t => t.tipo === 'ingreso')
+                        .reduce((acc, curr) => acc + Number(curr.monto), 0)
+                        .toFixed(2)}
+                    </p>
+                  </motion.div>
+                  <motion.div whileHover={{ y: -5 }} className="bg-red-50 p-4 rounded-lg">
+                    <p className="text-sm text-slate-500 mb-1">Total Egresos</p>
+                    <p className="text-2xl font-bold text-red-600">
+                      S/ {transactions
+                        .filter(t => t.tipo === 'gasto')
+                        .reduce((acc, curr) => acc + Number(curr.monto), 0)
+                        .toFixed(2)}
+                    </p>
+                  </motion.div>
+                  <motion.div whileHover={{ y: -5 }} className="bg-blue-50 p-4 rounded-lg">
+                    <p className="text-sm text-slate-500 mb-1">Saldo Parcial</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      S/ {transactions
+                        .reduce((acc, curr) => acc + (curr.tipo === 'ingreso' ? Number(curr.monto) : -Number(curr.monto)), 0)
+                        .toFixed(2)}
+                    </p>
+                  </motion.div>
+                </div>
+                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                  <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white h-12">
+                    Procesar con IA
+                  </Button>
+                </motion.div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Registro */}
       <Modal
@@ -456,11 +532,11 @@ export function TransactionRegistry() {
               <label className="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
               <select
                 value={formData.tipo}
-                onChange={(e) => setFormData({...formData, tipo: e.target.value as 'ingreso' | 'egreso'})}
+                onChange={(e) => setFormData({...formData, tipo: e.target.value as 'ingreso' | 'gasto'})}
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500"
               >
                 <option value="ingreso">Ingreso</option>
-                <option value="egreso">Egreso</option>
+                <option value="gasto">Egreso</option>
               </select>
             </div>
             <div>

@@ -91,6 +91,51 @@ export function CashClosure() {
     }
   }
 
+  if (loading) {
+    return <div className="flex justify-center items-center h-96"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>
+  }
+
+  if (!activeClosure) {
+    return (
+      <motion.div 
+        className="p-8 max-w-7xl mx-auto text-center"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
+        <h1 className="text-3xl font-bold text-slate-900 mb-4">Cierre de Caja</h1>
+        {activeFondo ? (
+          <Card className="max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle>Iniciar Cierre del Día</CardTitle>
+              <CardDescription>Se utilizará el fondo de caja actual (ID: {activeFondo.id})</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={handleIniciarCierre} 
+                disabled={processing}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {processing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Iniciar Cierre
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle>No hay caja aperturada ahora mismo</CardTitle>
+              <CardDescription>Debes crear un fondo de caja para el día antes de poder realizar un cierre.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <p className="text-sm text-slate-500">Ve a "Registro de Transacciones" o crea un fondo inicial.</p>
+            </CardContent>
+          </Card>
+        )}
+      </motion.div>
+    )
+  }
+
   return (
     <motion.div 
       className="p-8 max-w-7xl mx-auto"
@@ -99,11 +144,11 @@ export function CashClosure() {
       variants={containerVariants}
     >
       <motion.div className="mb-8" variants={itemVariants}>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Cierre de Caja - 26 Nov 2024</h1>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Cierre de Caja - {new Date().toLocaleDateString()}</h1>
         <p className="text-slate-500">Completa el cierre de caja y reconcilia el efectivo</p>
       </motion.div>
 
-      {/* Análisis de IA */}
+      {/* Análisis de IA / Sistema */}
       <motion.div variants={itemVariants}>
         <Card className="mb-8 border-l-4 border-l-blue-600">
           <CardHeader>
@@ -111,46 +156,42 @@ export function CashClosure() {
               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                 <CheckCircle2 className="w-6 h-6 text-blue-600" />
               </div>
-              Análisis de la IA
+              Resumen del Sistema
             </CardTitle>
-            <CardDescription>La IA ha procesado 12 transacciones</CardDescription>
+            <CardDescription>Calculado en base a las transacciones registradas</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4 mb-6">
               <motion.div whileHover={{ y: -5 }} className="bg-green-50 p-4 rounded-lg border border-green-200">
                 <p className="text-sm text-slate-500 mb-1">Total Ingresos</p>
-                <p className="text-3xl font-bold text-green-600">S/ 650.00</p>
+                <p className="text-3xl font-bold text-green-600">S/ {summary?.total_ingresos_sistema?.toFixed(2) || '0.00'}</p>
               </motion.div>
               <motion.div whileHover={{ y: -5 }} className="bg-red-50 p-4 rounded-lg border border-red-200">
                 <p className="text-sm text-slate-500 mb-1">Total Egresos</p>
-                <p className="text-3xl font-bold text-red-600">S/ 125.50</p>
+                <p className="text-3xl font-bold text-red-600">S/ {summary?.total_egresos_sistema?.toFixed(2) || '0.00'}</p>
               </motion.div>
               <motion.div whileHover={{ y: -5 }} className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <p className="text-sm text-slate-500 mb-1">Saldo Final (IA)</p>
-                <p className="text-3xl font-bold text-blue-600">S/ 524.50</p>
+                <p className="text-sm text-slate-500 mb-1">Saldo Esperado</p>
+                <p className="text-3xl font-bold text-blue-600">S/ {summary?.saldo_sistema?.toFixed(2) || '0.00'}</p>
               </motion.div>
             </div>
 
-            {/* Alertas */}
-            <div className="space-y-3">
+            {/* Alertas de Diferencia */}
+            {difference !== null && Math.abs(difference) > 0 && (
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
                 className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
               >
                 <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-yellow-900">Discrepancia detectada</p>
                   <p className="text-sm text-yellow-800">
-                    Se encontró una diferencia de S/ 5.00 en la categoría de ingresos por tarjeta
+                    Se encontró una diferencia de S/ {Math.abs(difference).toFixed(2)} ({difference > 0 ? 'Sobrante' : 'Faltante'})
                   </p>
                 </div>
               </motion.div>
-              <button className="text-blue-600 text-sm font-medium hover:underline">
-                Ver Transacciones con Discrepancias →
-              </button>
-            </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
@@ -207,29 +248,9 @@ export function CashClosure() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex justify-between py-2 border-b border-slate-200">
-                <span className="text-slate-900">Saldo Inicial de Caja</span>
-                <span className="font-semibold">S/ 100.00</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-slate-200">
-                <span className="text-slate-900">+ Ingresos por Efectivo</span>
-                <span className="font-semibold text-green-600">S/ 450.00</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-slate-200">
-                <span className="text-slate-900">+ Ingresos por Tarjeta</span>
-                <span className="font-semibold text-green-600">S/ 200.00</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-slate-200">
-                <span className="text-slate-900">- Egresos por Efectivo</span>
-                <span className="font-semibold text-red-600">-S/ 75.50</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-slate-200">
-                <span className="text-slate-900">- Retiros de Propietario</span>
-                <span className="font-semibold text-red-600">-S/ 50.00</span>
-              </div>
               <div className="flex justify-between py-3 bg-blue-50 px-4 py-3 rounded-lg border border-blue-200">
-                <span className="font-bold text-slate-900">Saldo Esperado (IA)</span>
-                <span className="text-2xl font-bold text-blue-600">S/ 624.50</span>
+                <span className="font-bold text-slate-900">Saldo Esperado (Sistema)</span>
+                <span className="text-2xl font-bold text-blue-600">S/ {summary?.saldo_sistema?.toFixed(2) || '0.00'}</span>
               </div>
               <div className="flex justify-between py-3 bg-slate-100 px-4 py-3 rounded-lg">
                 <span className="font-bold text-slate-900">Saldo Físico Contado</span>
@@ -292,11 +313,12 @@ export function CashClosure() {
 
       {/* Botones de Acción */}
       <motion.div variants={itemVariants} className="flex gap-4">
-        <Button variant="outline" className="flex-1 h-12 bg-transparent">
-          Guardar Borrador
-        </Button>
         <motion.div className="flex-1" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white">
+          <Button 
+            onClick={handleFinalizarCierre}
+            disabled={processing || !physicalCash}
+            className="w-full h-12 bg-green-600 hover:bg-green-700 text-white"
+          >
             Confirmar Cierre de Caja
           </Button>
         </motion.div>
@@ -304,3 +326,4 @@ export function CashClosure() {
     </motion.div>
   )
 }
+
