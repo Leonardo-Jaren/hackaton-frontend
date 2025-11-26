@@ -1,4 +1,5 @@
 import { Download, Eye } from "lucide-react"
+import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card"
 import { Button } from "../../../components/ui/button"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
@@ -24,42 +25,67 @@ export function Reports() {
     { name: "Otros", value: 40, color: "#eab308" },
   ]
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  }
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1
+    }
+  }
+
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="mb-8">
+    <motion.div 
+      className="p-8 max-w-7xl mx-auto"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      <motion.div className="mb-8" variants={itemVariants}>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Reportes e Historial</h1>
         <p className="text-slate-500">Consulta y analiza tus cierres de caja anteriores</p>
-      </div>
+      </motion.div>
 
       {/* Filtros */}
-      <Card className="mb-8">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-900 mb-2">Desde</label>
-              <input type="date" className="w-full px-4 py-2 border border-slate-300 rounded-lg" />
+      <motion.div variants={itemVariants}>
+        <Card className="mb-8">
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Desde</label>
+                <input type="date" className="w-full px-4 py-2 border border-slate-300 rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Hasta</label>
+                <input type="date" className="w-full px-4 py-2 border border-slate-300 rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Estado</label>
+                <select className="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                  <option>Todos</option>
+                  <option>Cerrado</option>
+                  <option>Con Errores</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Filtrar</Button>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-900 mb-2">Hasta</label>
-              <input type="date" className="w-full px-4 py-2 border border-slate-300 rounded-lg" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-900 mb-2">Estado</label>
-              <select className="w-full px-4 py-2 border border-slate-300 rounded-lg">
-                <option>Todos</option>
-                <option>Cerrado</option>
-                <option>Con Errores</option>
-              </select>
-            </div>
-            <div className="flex items-end">
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Filtrar</Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8" variants={itemVariants}>
         <Card>
           <CardHeader>
             <CardTitle>Ingresos vs Egresos (Mensual)</CardTitle>
@@ -103,71 +129,83 @@ export function Reports() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
 
       {/* Tabla de Cierres */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Historial de Cierres</CardTitle>
-          <CardDescription>Últimos 4 cierres de caja</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="px-4 py-3 text-left font-semibold">Fecha</th>
-                  <th className="px-4 py-3 text-left font-semibold">Saldo IA</th>
-                  <th className="px-4 py-3 text-left font-semibold">Saldo Físico</th>
-                  <th className="px-4 py-3 text-left font-semibold">Diferencia</th>
-                  <th className="px-4 py-3 text-left font-semibold">Estado</th>
-                  <th className="px-4 py-3 text-center font-semibold">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {closuresData.map((closure, idx) => (
-                  <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3 font-medium">{closure.date}</td>
-                    <td className="px-4 py-3">S/ {closure.aiBalance}</td>
-                    <td className="px-4 py-3">S/ {closure.physicalBalance}</td>
-                    <td
-                      className={`px-4 py-3 font-semibold ${
-                        closure.difference === 0 ? "text-green-600" : "text-orange-600"
-                      }`}
+      <motion.div variants={itemVariants}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Historial de Cierres</CardTitle>
+            <CardDescription>Últimos 4 cierres de caja</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="px-4 py-3 text-left font-semibold">Fecha</th>
+                    <th className="px-4 py-3 text-left font-semibold">Saldo IA</th>
+                    <th className="px-4 py-3 text-left font-semibold">Saldo Físico</th>
+                    <th className="px-4 py-3 text-left font-semibold">Diferencia</th>
+                    <th className="px-4 py-3 text-left font-semibold">Estado</th>
+                    <th className="px-4 py-3 text-center font-semibold">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {closuresData.map((closure, idx) => (
+                    <motion.tr 
+                      key={idx} 
+                      className="border-b border-slate-200 hover:bg-slate-50 transition-colors"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.1 }}
                     >
-                      {closure.difference > 0 ? "+" : ""} S/ {closure.difference}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${
-                          closure.status === "Cerrado" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                      <td className="px-4 py-3 font-medium">{closure.date}</td>
+                      <td className="px-4 py-3">S/ {closure.aiBalance}</td>
+                      <td className="px-4 py-3">S/ {closure.physicalBalance}</td>
+                      <td
+                        className={`px-4 py-3 font-semibold ${
+                          closure.difference === 0 ? "text-green-600" : "text-orange-600"
                         }`}
                       >
-                        {closure.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 flex justify-center gap-2">
-                      <button className="p-2 hover:bg-slate-100 rounded">
-                        <Eye className="w-4 h-4 text-blue-600" />
-                      </button>
-                      <button className="p-2 hover:bg-slate-100 rounded">
-                        <Download className="w-4 h-4 text-blue-600" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        {closure.difference > 0 ? "+" : ""} S/ {closure.difference}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            closure.status === "Cerrado" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                          }`}
+                        >
+                          {closure.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 flex justify-center gap-2">
+                        <button className="p-2 hover:bg-slate-100 rounded">
+                          <Eye className="w-4 h-4 text-blue-600" />
+                        </button>
+                        <button className="p-2 hover:bg-slate-100 rounded">
+                          <Download className="w-4 h-4 text-blue-600" />
+                        </button>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-          <div className="flex gap-4 mt-6">
-            <Button variant="outline" className="flex-1 bg-transparent">
-              Exportar a Excel
-            </Button>
-            <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">Generar PDF</Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            <div className="flex gap-4 mt-6">
+              <motion.div className="flex-1" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button variant="outline" className="w-full bg-transparent">
+                  Exportar a Excel
+                </Button>
+              </motion.div>
+              <motion.div className="flex-1" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Generar PDF</Button>
+              </motion.div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   )
 }
