@@ -41,7 +41,7 @@ export function AuthLayout({ children, illustration }: AuthLayoutProps) {
     return (
         <div className="h-screen w-full grid grid-cols-1 md:grid-cols-2 overflow-hidden">
             {/* Left column - Content (Form) */}
-            <div className="flex items-center justify-center p-8 bg-linear-to-br from-gray-900 to-black h-full overflow-y-auto">
+            <div className="flex items-center justify-center p-8 bg-gradient-to-br from-gray-900 to-black h-full overflow-y-auto">
                 <motion.div
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -53,7 +53,7 @@ export function AuthLayout({ children, illustration }: AuthLayoutProps) {
             </div>
 
             {/* Right column - Illustration */}
-            <div className="hidden md:flex items-center justify-center p-8 bg-linear-to-br from-gray-900 to-gray-800 h-full">
+            <div className="hidden md:flex items-center justify-center p-8 bg-gradient-to-br from-gray-900 to-gray-800 h-full">
                 <motion.div
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -61,7 +61,7 @@ export function AuthLayout({ children, illustration }: AuthLayoutProps) {
                     className="relative rounded-3xl overflow-hidden p-8 border border-gray-700 w-full max-w-lg"
                 >
                     <div className="relative rounded-2xl overflow-hidden">
-                        <div className={`absolute inset-0 bg-linear-to-br ${illustrationData.gradientFrom} ${illustrationData.gradientVia} ${illustrationData.gradientTo} opacity-30`}></div>
+                        <div className={`absolute inset-0 bg-gradient-to-br ${illustrationData.gradientFrom} ${illustrationData.gradientVia} ${illustrationData.gradientTo} opacity-30`}></div>
                         <div className="relative py-20 flex items-center justify-center">
                             <div className="text-center text-white">
                                 {illustrationData.imageSrc ? (
@@ -73,7 +73,7 @@ export function AuthLayout({ children, illustration }: AuthLayoutProps) {
                                         />
                                     </div>
                                 ) : (
-                                    <div className={`w-48 h-48 mx-auto mb-4 rounded-full bg-linear-to-br ${illustrationData.gradientFrom} ${illustrationData.gradientVia} ${illustrationData.gradientTo} flex items-center justify-center`}>
+                                    <div className={`w-48 h-48 mx-auto mb-4 rounded-full bg-gradient-to-br ${illustrationData.gradientFrom} ${illustrationData.gradientVia} ${illustrationData.gradientTo} flex items-center justify-center`}>
                                         {illustrationData.icon}
                                     </div>
                                 )}
