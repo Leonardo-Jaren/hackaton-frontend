@@ -1,30 +1,45 @@
-"use client"
-
-import type React from "react"
-
-import { useState } from "react"
-import { Mail, Lock, Eye, EyeOff } from "lucide-react"
+import { useState, useEffect } from 'react'
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { useGoogleAuth } from '../hooks/useGoogleAuth'
 
 interface LoginFormProps {
-  onSubmit: (email: string, password: string) => Promise<any>
-  isLoading?: boolean
-  error?: string | null
-  onToggle?: () => void
+    onSubmit: (email: string, password: string) => Promise<any>
+    isLoading?: boolean
+    error?: string | null
+    onToggle?: () => void
 }
 
 export function LoginForm({ onSubmit, isLoading = false, error, onToggle }: LoginFormProps) {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
+    const { handleGoogleLogin, isLoading: googleLoading, error: googleError, initGoogleAuth } = useGoogleAuth()
+    
+    const displayError = error || googleError
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      await onSubmit(email, password)
-    } catch (err) {
-      console.error("LoginForm onSubmit error:", err)
+    useEffect(() => {
+        // Inicializar Google OAuth cuando el componente se monta
+        initGoogleAuth()
+    }, [])
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        try {
+            await onSubmit(email, password)
+            // La navegación se maneja en el componente padre al detectar autenticación
+        } catch (err) {
+            console.error('LoginForm onSubmit error:', err)
+        }
     }
-  }
+
+    const handleGoogleSignIn = async () => {
+        try {
+            await handleGoogleLogin()
+            // La navegación se maneja en el componente padre al detectar autenticación
+        } catch (err) {
+            console.error('Google Sign In error:', err)
+        }
+    }
 
   return (
     <div className="w-full max-w-md mx-auto">

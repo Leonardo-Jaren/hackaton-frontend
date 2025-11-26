@@ -33,9 +33,9 @@ export default function InicioSesion() {
         imageAlt: 'React Logo',
         title: 'SmarthClose AI',
         description: 'Bienvenido a tu sistema de cierre de caja inteligente',
-        gradientFrom: 'from-orange-500',
-        gradientVia: 'via-red-600',
-        gradientTo: 'to-purple-700'
+        gradientFrom: 'from-blue-500',
+        gradientVia: 'via-white-600',
+        gradientTo: 'to-blue-700'
     }
 
     // Ilustración para registro
@@ -46,7 +46,7 @@ export default function InicioSesion() {
             </svg>
         ),
         title: 'Únete a la Comunidad',
-        description: 'Sé parte de nuestra aventura cultural y descubre Huánuco',
+        description: 'Sé parte del sistema de cierre de caja inteligente',
         gradientFrom: 'from-blue-500',
         gradientVia: 'via-purple-600',
         gradientTo: 'to-pink-600'
@@ -71,4 +71,4 @@ export default function InicioSesion() {
             )}
         </AuthLayout>
     )
-}
+} 

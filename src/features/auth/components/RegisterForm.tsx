@@ -71,7 +71,7 @@ export function RegisterForm({ onSubmit, isLoading, error, onToggle }: RegisterF
             <div className="mb-4 md:mb-8">
                 <h2 className="text-white text-xs md:text-sm font-medium mb-1 md:mb-2 tracking-wide">SmarthClose AI</h2>
                 <h1 className="text-white text-3xl md:text-5xl font-bold mb-2 md:mb-4">¡Únete a nosotros!</h1>
-                <p className="text-gray-400 text-xs md:text-sm">Crea tu cuenta y comienza a usar SmarthClose AI</p>
+                <p className="text-gray-400 text-xs md:text-sm">Crea tu cuenta y comienza en el sistema de cierre de caja inteligente</p>
             </div>
 
             <button
@@ -189,4 +189,4 @@ export function RegisterForm({ onSubmit, isLoading, error, onToggle }: RegisterF
             </div>
         </>
     )
-}
+} 
