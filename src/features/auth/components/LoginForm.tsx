@@ -44,9 +44,9 @@ export function LoginForm({ onSubmit, isLoading = false, error, onToggle }: Logi
     return (
         <>
             <div className="mb-4 md:mb-8">
-                        <h2 className="text-white text-xs md:text-sm font-medium mb-1 md:mb-2 tracking-wide">Cultura Huanuqueña Interactiva</h2>
+                        <h2 className="text-white text-xs md:text-sm font-medium mb-1 md:mb-2 tracking-wide">SmarthClose AI</h2>
                         <h1 className="text-white text-3xl md:text-5xl font-bold mb-2 md:mb-4 text-center">¡Bienvenido de nuevo!</h1>
-                        <p className="text-gray-400 text-xs md:text-sm">Inicia sesión para continuar tu viaje y descubrir la magia de Huánuco.</p>
+                        <p className="text-gray-400 text-xs md:text-sm">Inicia sesión para usar SmarthClose AI</p>
                     </div>
 
                     <button
