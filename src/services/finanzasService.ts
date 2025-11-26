@@ -63,13 +63,13 @@ export interface CierreCajaResumen {
 export const finanzasService = {
   // --- Core ---
   getCategorias: async () => {
-    const response = await apiClient.get<Categoria[]>('/core/categorias/')
-    return response.data
+    const response = await apiClient.get<{ categorias: Categoria[] }>('/core/categorias/')
+    return response.data.categorias
   },
 
   getMetodosPago: async () => {
-    const response = await apiClient.get<MetodoPago[]>('/core/metodos-pago/')
-    return response.data
+    const response = await apiClient.get<{ metodos_pago: MetodoPago[] }>('/core/metodos-pago/')
+    return response.data.metodos_pago
   },
 
   inicializarDatos: async () => {
