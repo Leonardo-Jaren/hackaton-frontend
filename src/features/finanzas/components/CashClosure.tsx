@@ -1,9 +1,78 @@
-import { AlertCircle, CheckCircle2 } from "lucide-react"
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card"
 import { Button } from "../../../components/ui/Button"
+import { useState, useEffect } from "react"
+import { finanzasService } from "../../../services"
+// import { useAuthStore } from "../../../store/useAuthStore" // Para futuro uso
 
 export function CashClosure() {
+  // const { user } = useAuthStore() // Para futuro uso
+  const [efectivoFisico, setEfectivoFisico] = useState<string>('')
+  const [calculating, setCalculating] = useState(false)
+  const [cierreData, setCierreData] = useState<any>(null)
+  const [diferencia, setDiferencia] = useState<number | null>(null)
+  
+  useEffect(() => {
+    // TODO: Cargar datos del cierre actual si existe
+    fetchCierreActual()
+  }, [])
+  
+  const fetchCierreActual = async () => {
+    // Por ahora datos de ejemplo, luego conectar con el backend
+    // try {
+    //   const data = await finanzasService.obtenerResumenCierre(cierreId)
+    //   setCierreData(data)
+    // } catch (error) {
+    //   console.error('Error cargando cierre:', error)
+    // }
+  }
+  
+  const handleCalcularDiferencia = async () => {
+    if (!efectivoFisico || parseFloat(efectivoFisico) <= 0) {
+      alert('Por favor ingresa un monto válido')
+      return
+    }
+    
+    try {
+      setCalculating(true)
+      
+      // TODO: Obtener el ID del cierre actual desde el backend
+      const cierreId = 2 // Esto debería venir del estado o del backend
+      
+      const response = await finanzasService.registrarEfectivoFisico(
+        cierreId,
+        parseFloat(efectivoFisico)
+      )
+      
+      console.log('✅ Diferencia calculada:', response)
+      console.log('📊 Diferencia efectivo:', response.diferencia_efectivo)
+      console.log('💰 Ventas sistema:', response.ventas_efectivo_sistema)
+      console.log('💵 Efectivo contado:', response.efectivo_contado_fisico)
+      
+      // Actualizar la diferencia
+      if (response.diferencia_efectivo !== undefined) {
+        setDiferencia(response.diferencia_efectivo)
+        console.log('✅ Estado diferencia actualizado a:', response.diferencia_efectivo)
+      }
+      
+      // Actualizar los datos del cierre
+      setCierreData(response)
+      
+    } catch (error: any) {
+      console.error('❌ Error calculando diferencia:', error)
+      console.error('📋 Response data:', error.response?.data)
+      
+      const errorMsg = error.response?.data?.error || error.response?.data?.detalles || error.message || 'Error desconocido'
+      const detalles = error.response?.data?.detalles 
+        ? '\n\nDetalles:\n' + JSON.stringify(error.response.data.detalles, null, 2)
+        : ''
+      
+      alert(`❌ Error al calcular diferencia:\n${errorMsg}${detalles}`)
+    } finally {
+      setCalculating(false)
+    }
+  }
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -101,14 +170,28 @@ export function CashClosure() {
                   <span className="absolute left-4 top-3 text-slate-900 font-semibold">S/</span>
                   <input
                     type="number"
+                    step="0.01"
                     placeholder="0.00"
+                    value={efectivoFisico}
+                    onChange={(e) => setEfectivoFisico(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                   />
                 </div>
               </div>
               <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12">
-                  Calcular Diferencia
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12"
+                  onClick={handleCalcularDiferencia}
+                  disabled={calculating || !efectivoFisico}
+                >
+                  {calculating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      Calculando...
+                    </>
+                  ) : (
+                    'Calcular Diferencia'
+                  )}
                 </Button>
               </motion.div>
             </div>
@@ -150,12 +233,58 @@ export function CashClosure() {
               </div>
               <div className="flex justify-between py-3 bg-slate-100 px-4 py-3 rounded-lg">
                 <span className="font-bold text-slate-900">Saldo Físico Contado</span>
-                <span className="text-2xl font-bold">-</span>
+                <span className="text-2xl font-bold">
+                  {efectivoFisico ? `S/ ${parseFloat(efectivoFisico).toFixed(2)}` : '-'}
+                </span>
               </div>
-              <div className="flex justify-between py-3 bg-red-50 px-4 py-3 rounded-lg border border-red-200">
+              <div className={`flex justify-between py-3 px-4 py-3 rounded-lg border ${
+                diferencia === null 
+                  ? 'bg-slate-50 border-slate-200'
+                  : diferencia === 0
+                  ? 'bg-green-50 border-green-200'
+                  : diferencia > 0
+                  ? 'bg-blue-50 border-blue-200'
+                  : 'bg-red-50 border-red-200'
+              }`}>
                 <span className="font-bold text-slate-900">Diferencia</span>
-                <span className="text-2xl font-bold text-red-600">-</span>
+                <span className={`text-2xl font-bold ${
+                  diferencia === null
+                    ? 'text-slate-400'
+                    : diferencia === 0
+                    ? 'text-green-600'
+                    : diferencia > 0
+                    ? 'text-blue-600'
+                    : 'text-red-600'
+                }`}>
+                  {diferencia !== null ? `S/ ${diferencia.toFixed(2)}` : '-'}
+                </span>
               </div>
+              {diferencia !== null && diferencia !== 0 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`p-3 rounded-lg ${
+                    diferencia > 0 ? 'bg-blue-50' : 'bg-red-50'
+                  }`}
+                >
+                  <p className={`text-sm font-medium ${
+                    diferencia > 0 ? 'text-blue-900' : 'text-red-900'
+                  }`}>
+                    {diferencia > 0 
+                      ? `✅ Sobrante de S/ ${diferencia.toFixed(2)}`
+                      : `⚠️ Faltante de S/ ${Math.abs(diferencia).toFixed(2)}`
+                    }
+                  </p>
+                  <p className={`text-xs mt-1 ${
+                    diferencia > 0 ? 'text-blue-700' : 'text-red-700'
+                  }`}>
+                    {diferencia > 0
+                      ? 'Hay más efectivo del esperado en caja'
+                      : 'Falta efectivo en caja, verifica las transacciones'
+                    }
+                  </p>
+                </motion.div>
+              )}
             </div>
           </CardContent>
         </Card>

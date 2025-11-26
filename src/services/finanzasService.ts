@@ -153,27 +153,29 @@ export const finanzasService = {
 
   // --- Cierre de Caja ---
   iniciarCierre: async (fondoCajaId: number) => {
-    const response = await apiClient.post('/iniciar/', { fondo_caja_id: fondoCajaId })
+    const response = await apiClient.post('/cierre_caja/iniciar/', { fondo_caja_id: fondoCajaId })
     return response.data
   },
 
   obtenerResumenCierre: async (cierreId: number) => {
-    const response = await apiClient.get<CierreCajaResumen>(`/resumen/${cierreId}/`)
+    const response = await apiClient.get<CierreCajaResumen>(`/cierre_caja/resumen/${cierreId}/`)
     return response.data
   },
 
   registrarEfectivoFisico: async (cierreId: number, monto: number) => {
-    const response = await apiClient.patch(`/efectivo/${cierreId}/`, { efectivo_fisico: monto })
+    const response = await apiClient.patch(`/cierre_caja/efectivo/${cierreId}/`, { 
+      efectivo_contado_fisico: monto 
+    })
     return response.data
   },
 
   finalizarCierre: async (cierreId: number) => {
-    const response = await apiClient.post(`/finalizar/${cierreId}/`)
+    const response = await apiClient.post(`/cierre_caja/finalizar/${cierreId}/`)
     return response.data
   },
   
   getDetalleCierre: async (cierreId: number) => {
-    const response = await apiClient.get(`/detalle/${cierreId}/`)
+    const response = await apiClient.get(`/cierre_caja/detalle/${cierreId}/`)
     return response.data
   }
 }
