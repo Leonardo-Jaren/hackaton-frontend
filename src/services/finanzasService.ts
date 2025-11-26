@@ -33,6 +33,22 @@ export interface Transaccion {
   metodo_pago?: number
   metodo_pago_nombre?: string
   estado?: string
+  procesado_ia?: boolean
+  confianza_ia?: number
+}
+
+export interface ResultadoIA {
+  id: number
+  tipo: 'ingreso' | 'egreso'
+  monto: number
+  descripcion: string
+  categoria_sugerida?: string
+  categoria_sugerida_nombre?: string
+  metodo_pago_sugerido?: string
+  metodo_pago_sugerido_nombre?: string
+  confianza: number
+  convertido_transaccion: boolean
+  numero_comprobante?: string
 }
 
 export interface CreateTransaccionDTO {
@@ -115,6 +131,22 @@ export const finanzasService = {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
+    })
+    return response.data
+  },
+
+  getResultadosIA: async (empresaId: number, archivoId?: number) => {
+    const params = new URLSearchParams()
+    params.append('empresa_id', empresaId.toString())
+    if (archivoId) params.append('archivo_id', archivoId.toString())
+    
+    const response = await apiClient.get<{ resultados: ResultadoIA[] }>('/transacciones/resultados-ia/', { params })
+    return response.data
+  },
+
+  convertirResultadoIA: async (resultadoId: number) => {
+    const response = await apiClient.post('/transacciones/resultados-ia/', {
+      resultado_id: resultadoId
     })
     return response.data
   },

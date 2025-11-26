@@ -1,17 +1,19 @@
 import { useState, useEffect, useRef } from "react"
-import { Upload, Camera, Plus, Trash2, Edit2, Loader2 } from "lucide-react"
+import { Upload, Camera, Plus, Trash2, Edit2, Loader2, CheckCircle, AlertCircle } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card"
 import { Button } from "../../../components/ui/Button"
 import { Modal } from "../../../components/ui/Modal"
 import { useAuthStore } from "../../../store/useAuthStore"
-import { finanzasService, type Transaccion, type Categoria, type MetodoPago } from "../../../services/finanzasService"
+import { finanzasService, type Transaccion, type Categoria, type MetodoPago, type ResultadoIA } from "../../../services/finanzasService"
 
 export function TransactionRegistry() {
-  const { user } = useAuthStore()
+  const { user, setUser } = useAuthStore()
   const [transactions, setTransactions] = useState<Transaccion[]>([])
+  const [resultadosIA, setResultadosIA] = useState<ResultadoIA[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [processingIA, setProcessingIA] = useState(false)
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -31,6 +33,15 @@ export function TransactionRegistry() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    // Si el usuario no tiene empresaId, asignar empresa por defecto (ID 1)
+    if (user && !user.empresaId) {
+      console.warn('⚠️ Usuario sin empresa asignada, asignando empresa ID 1')
+      setUser({ 
+        ...user, 
+        empresaId: 1,
+        empresaNombre: 'Mi Empresa Test S.A.C.'
+      })
+    }
     fetchData()
   }, [])
 
@@ -56,18 +67,82 @@ export function TransactionRegistry() {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !user?.empresaId) return
+    
+    console.log('🔍 Debug - file:', file)
+    console.log('🔍 Debug - user:', user)
+    console.log('🔍 Debug - empresaId:', user?.empresaId)
+    
+    if (!file) {
+      console.warn('⚠️ No se seleccionó ningún archivo')
+      return
+    }
+    
+    if (!user?.empresaId) {
+      console.error('❌ No hay empresaId en el usuario')
+      alert('Error: No se encontró la empresa asociada al usuario. Por favor, inicia sesión nuevamente.')
+      return
+    }
 
     try {
       setUploading(true)
-      await finanzasService.subirArchivoIA(user.empresaId, file)
-      // Refresh transactions after upload (assuming backend processes it or we poll)
-      // For now just refresh list
+      
+      console.log('📤 Subiendo archivo:', file.name)
+      
+      // Subir archivo y procesar con IA
+      const response = await finanzasService.subirArchivoIA(user.empresaId, file)
+      
+      console.log('✅ Respuesta del backend:', response)
+      
+      // Obtener los resultados procesados por la IA
+      const resultadosResponse = await finanzasService.getResultadosIA(user.empresaId)
+      
+      console.log('📊 Resultados de IA obtenidos:', resultadosResponse)
+      
+      setResultadosIA(resultadosResponse.resultados || [])
+      
+      const resultados = resultadosResponse.resultados || []
+      
+      // Convertir automáticamente los resultados a transacciones
+      if (resultados.length > 0) {
+        setProcessingIA(true)
+        
+        console.log(`🤖 Procesando ${resultados.length} resultados...`)
+        
+        let convertidos = 0
+        
+        for (const resultado of resultados) {
+          // Verificar que no esté ya convertido y tenga buena confianza
+          if (!resultado.convertido_transaccion && resultado.confianza >= 70) {
+            try {
+              console.log(`   ✓ Convirtiendo resultado #${resultado.id} (${resultado.confianza}% confianza)`)
+              await finanzasService.convertirResultadoIA(resultado.id)
+              convertidos++
+            } catch (error) {
+              console.error(`   ✗ Error convirtiendo resultado #${resultado.id}:`, error)
+            }
+          } else {
+            console.log(`   ⊘ Saltando resultado #${resultado.id} (ya convertido o baja confianza: ${resultado.confianza}%)`)
+          }
+        }
+        
+        setProcessingIA(false)
+        
+        console.log(`✨ Proceso completo: ${convertidos}/${resultados.length} convertidos`)
+      }
+      
+      // Refrescar lista de transacciones
       await fetchData()
-      alert("Archivo subido exitosamente. La IA está procesando los datos.")
-    } catch (error) {
-      console.error("Error uploading file:", error)
-      alert("Error al subir el archivo")
+      
+      const mensaje = resultados.length > 0 
+        ? `✅ Archivo procesado exitosamente!\n📊 Se detectaron ${resultados.length} transacciones`
+        : '⚠️ Archivo procesado pero no se detectaron transacciones'
+      
+      alert(mensaje)
+      
+    } catch (error: any) {
+      console.error("❌ Error uploading file:", error)
+      const errorMsg = error.response?.data?.error || error.message || "Error desconocido"
+      alert(`❌ Error al procesar el archivo:\n${errorMsg}\n\nVerifica que sea un Excel (.xlsx) o imagen (.jpg, .png)`)
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -249,12 +324,35 @@ export function TransactionRegistry() {
                             {tx.tipo.charAt(0).toUpperCase() + tx.tipo.slice(1)}
                           </span>
                         </td>
-                        <td className="px-4 py-3">{tx.descripcion}</td>
-                        <td className="px-4 py-3 font-medium">S/ {Number(tx.monto).toFixed(2)}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            {tx.descripcion}
+                            {tx.procesado_ia && (
+                              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" />
+                                IA
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div>
+                            <span className="font-medium">S/ {Number(tx.monto).toFixed(2)}</span>
+                            {tx.procesado_ia && tx.confianza_ia && (
+                              <div className="text-xs text-slate-500">
+                                Confianza: {tx.confianza_ia}%
+                              </div>
+                            )}
+                          </div>
+                        </td>
                         <td className="px-4 py-3">{tx.metodo_pago_nombre || '-'}</td>
                         <td className="px-4 py-3">
-                          <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700">
-                            Registrado
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            tx.procesado_ia 
+                              ? 'bg-purple-100 text-purple-700' 
+                              : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {tx.procesado_ia ? 'Procesado IA' : 'Manual'}
                           </span>
                         </td>
                         <td className="px-4 py-3 flex justify-center gap-2">
@@ -420,11 +518,29 @@ export function TransactionRegistry() {
                 </p>
               </motion.div>
             </div>
-            <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-              <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white h-12">
-                Procesar con IA
-              </Button>
-            </motion.div>
+            
+            {/* Indicador de transacciones procesadas por IA */}
+            {transactions.some(t => t.procesado_ia) && (
+              <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <div className="flex items-center gap-2 text-purple-700">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    {transactions.filter(t => t.procesado_ia).length} transacciones procesadas automáticamente por IA
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            {processingIA && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm font-medium">
+                    Procesando resultados de IA...
+                  </span>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
