@@ -69,9 +69,9 @@ export function RegisterForm({ onSubmit, isLoading, error, onToggle }: RegisterF
     return (
         <>
             <div className="mb-4 md:mb-8">
-                <h2 className="text-white text-xs md:text-sm font-medium mb-1 md:mb-2 tracking-wide">Cultura Huanuqueña Interactiva</h2>
+                <h2 className="text-white text-xs md:text-sm font-medium mb-1 md:mb-2 tracking-wide">SmarthClose AI</h2>
                 <h1 className="text-white text-3xl md:text-5xl font-bold mb-2 md:mb-4">¡Únete a nosotros!</h1>
-                <p className="text-gray-400 text-xs md:text-sm">Crea tu cuenta y comienza tu aventura por Huánuco.</p>
+                <p className="text-gray-400 text-xs md:text-sm">Crea tu cuenta y comienza a usar SmarthClose AI</p>
             </div>
 
             <button

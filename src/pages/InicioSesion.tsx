@@ -31,8 +31,8 @@ export default function InicioSesion() {
     const loginIllustration = {
         imageSrc: reactLogo,
         imageAlt: 'React Logo',
-        title: 'Cultura Huanuqueña',
-        description: 'Descubre las vibrantes tradiciones y la rica herencia de Huánuco',
+        title: 'SmarthClose AI',
+        description: 'Bienvenido a tu sistema de cierre de caja inteligente',
         gradientFrom: 'from-orange-500',
         gradientVia: 'via-red-600',
         gradientTo: 'to-purple-700'
