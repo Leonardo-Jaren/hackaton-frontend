@@ -49,11 +49,14 @@ export function TransactionRegistry() {
     if (!user?.empresaId) return
     try {
       setLoading(true)
+      console.log('🔄 Refrescando datos...')
       const [cats, methods, txData] = await Promise.all([
         finanzasService.getCategorias(),
         finanzasService.getMetodosPago(),
         finanzasService.getTransacciones(user.empresaId)
       ])
+      
+      console.log('📥 Transacciones recibidas:', txData.transacciones.length, txData.transacciones)
       
       setCategorias(cats)
       setMetodosPago(methods)
@@ -128,10 +131,17 @@ export function TransactionRegistry() {
         setProcessingIA(false)
         
         console.log(`✨ Proceso completo: ${convertidos}/${resultados.length} convertidos`)
+        
+        // Esperar un momento antes de refrescar para que el backend termine de guardar
+        console.log('⏳ Esperando antes de refrescar...')
+        await new Promise(resolve => setTimeout(resolve, 1000))
       }
       
       // Refrescar lista de transacciones
+      console.log('🔄 Refrescando transacciones...')
       await fetchData()
+      
+      console.log('✅ Transacciones refrescadas')
       
       const mensaje = resultados.length > 0 
         ? `✅ Archivo procesado exitosamente!\n📊 Se detectaron ${resultados.length} transacciones`
